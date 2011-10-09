@@ -10,8 +10,39 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
 
+// simple struct for the indices
+class IndexNode implements Comparable<IndexNode> {
+    String value;
+    int location;
+    
+    public IndexNode(String val, int loc) {
+        value = val;
+        location = loc;
+    }
+    
+    public int compareTo(IndexNode otherNode) {
+        //if ((otherNode == null) || (value == null)) { return 0; }
+        //else {
+            return value.compareTo(otherNode.getValue());
+        //}
+    }
+    
+    public boolean equals(IndexNode otherNode) {
+        if ((otherNode == null) || (value == null)) { return false; }
+        else {
+            return value.equals(otherNode.getValue());
+        }
+    }
+    public String getValue() { return value; }
+    public int getLocation() { return location; }
+    
+}
+
 public class Assignment1 {
-    ArrayList<String>[] indices; // column:array
+    ArrayList<IndexNode>[] indices; // column:array
+    int MaxLinesToRead = 6000;
+    int TotalIndices = 500;
+    int indexInterval;
     String filen;
 	
 	//load takes a fileName as an argument and
@@ -22,19 +53,25 @@ public class Assignment1 {
 		try {
 			CSVReader reader =  new CSVReader(new FileReader(fileName),'|');
 		   filen = fileName;
+		   indexInterval = MaxLinesToRead / TotalIndices;
 			System.out.println("load "+fileName);
             String [] tmpline;
             int totalColumns;
             tmpline = reader.readNext();
             totalColumns = tmpline.length;
-            indices = (ArrayList<String>[])new ArrayList[tmpline.length];
+            indices = (ArrayList<IndexNode>[])new ArrayList[tmpline.length];
             for (int i=0; i<tmpline.length; i++) {
-                indices[i] = new ArrayList<String>();
+                indices[i] = new ArrayList<IndexNode>();
             }
             
 //            for (int i=0; i < tmpline.length; i++) {
             externalSort(fileName, totalColumns);
 //            }
+
+            // sort the generated indices
+            for (int i = 0; i < totalColumns; i++) {
+                java.util.Collections.sort(indices[i]);
+            }
             
             
 //	    	String [] nextLine;
@@ -78,6 +115,7 @@ public class Assignment1 {
 	// finds the closest location in the datafile
 	public int findInIndex(int columnNumber, String value)
 	{
+	    // currently linear search O(n) time
 	    // find the most great index that is less than over the index of the value
 	    //eg
 	    // looking for: "candy"
@@ -87,19 +125,21 @@ public class Assignment1 {
 	    //                   ^ less than, exit
 	    
 	    //System.out.println("Total indices for column "+columnNumber +": " + indices[columnNumber].size());
-	    Iterator<String> itr = indices[columnNumber].iterator();
+	    /*Iterator<IndexNode> itr = indices[columnNumber].iterator();
 	    int gtrthanindex = 0;
 	    String nextLine;
 	    while ((nextLine = itr.next()) != null) {
-	        String[] line = nextLine.split("|");
+	        //String[] line = nextLine.split("|");
 	        
-	        if (line[0].compareTo(value) >= 0) {
+	        if (line.compareTo(value) >= 0) {
 	            gtrthanindex = Integer.parseInt(line[1]);
             } else {
                 break;
             }
 	    }
-	    return gtrthanindex;
+	    return gtrthanindex;*/
+	    IndexNode compareNode = new IndexNode(value, 0);
+	    return java.util.Collections.binarySearch(indices[columnNumber], compareNode);
 	}
 	
 	//searchEq takes a columnNumber and a value and prints
@@ -113,7 +153,7 @@ public class Assignment1 {
     		String [] nextLine;
     		// Find in the index
     		int j = findInIndex(columnNumber, value);
-    		String filenc = filen+"_sorted_col_" + columnNumber+".csv";
+    		String filenc = "file_sorted_col_" + columnNumber+".csv";
     		//System.out.println("Opening file "+filenc+" at position "+j+", looking for column "+columnNumber);
     		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
     		while ((nextLine = reader.readNext()) != null) {
@@ -145,10 +185,10 @@ public class Assignment1 {
     		//System.out.println("searchEq col #"+columnNumber+"="+value);
     		String [] nextLine;
     		// Find in the index
-    		//int j = findInIndex(columnNumber, String.valueOf(value));
-    		String filenc = filen+"_sorted_col_" + columnNumber+".csv";
+    		int j = findInIndex(columnNumber, String.valueOf(value));
+    		String filenc = "file_sorted_col_" + columnNumber+".csv";
     		//System.out.println("Opening file "+filenc+" at position "+j+", looking for column "+columnNumber);
-    		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, 0);
+    		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
     		while ((nextLine = reader.readNext()) != null) {
     		    if (Float.parseFloat(nextLine[columnNumber]) > value) {
     		        System.out.println(flattenArray(nextLine, "|"));
@@ -241,7 +281,7 @@ public class Assignment1 {
                  justStarted = false;
                  //System.out.println("starting set "+numFiles+1);
                  // get 10k rows
-                 for(int i=0; i<7000; i++)
+                 for(int i=0; i<MaxLinesToRead; i++)
                  {
                      String[] line = initRelationReader.readNext();
                      if (line==null)
@@ -260,7 +300,7 @@ public class Assignment1 {
                     //if ((i == 2) || (i == 1) || (i == 3)) {
                     sortedTenKRows = mergeSort(tenKRows, i);
                      // write to disk
-                     FileWriter fw = new FileWriter(relation + "_chunk" + numFiles + "_col"+i+".csv");
+                     FileWriter fw = new FileWriter("file_chunk" + numFiles + "_col"+i+".csv");
                      BufferedWriter bw = new BufferedWriter(fw);
                      //bw.write(flattenArray(header,",")+"\n");
                      for(int j=0; j<sortedTenKRows.size(); j++)
@@ -277,7 +317,7 @@ public class Assignment1 {
              //System.out.println("Merging files, total columns: "+columns);
              for (int i=1; i<4; i++) {
                  //System.out.println("for column "+i);
-                 mergeFiles(relation, numFiles, i);
+                 mergeFiles("file", numFiles, i);
             }
 
              initRelationReader.close();
@@ -391,13 +431,20 @@ public class Assignment1 {
                  }
                  else
                  {
-                     // write to the sorted file
-                     bw.append(flattenArray(filerows.get(minIndex),"|")+"\n");
-                     
-                     // Indices store up to 200 total rows
-                     if ((indexLine % 20) == 0) {
-                         indices[compareIndex].add(filerows.get(minIndex)[compareIndex] + "|" + compareIndex);
+                    // write to the sorted file
+                    bw.append(flattenArray(filerows.get(minIndex),"|")+"\n");
+
+                     // Indices store up to indexInterval total rows                     
+                    if (indexLine % indexInterval == 0) {
+                        //indices[compareIndex].add(filerows.get(minIndex)[compareIndex] + "|" + compareIndex);
+                        IndexNode n = new IndexNode(filerows.get(minIndex)[compareIndex], compareIndex);
+                        indices[compareIndex].add(n);
                     }
+                     
+
+                     //if ((indexLine % 20) == 0) {
+                         //indices[compareIndex].add(filerows.get(minIndex)[compareIndex] + "|" + compareIndex);
+                    //}
                     indexLine++;
                      
                      // get another row from the file that had the min
