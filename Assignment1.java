@@ -202,10 +202,10 @@ public class Assignment1 {
 	}
 	
 	// sort an arrayList of arrays based on the ith column
-    private ArrayList<String[]> mergeSort(ArrayList<String[]> arr, int index)
+    private ArrayList<Comparable[]> mergeSort(ArrayList<Comparable[]> arr, int index)
     {
-         ArrayList<String[]> left = new ArrayList<String[]>();
-         ArrayList<String[]> right = new ArrayList<String[]>();
+         ArrayList<Comparable[]> left = new ArrayList<Comparable[]>();
+         ArrayList<Comparable[]> right = new ArrayList<Comparable[]>();
          if (arr.size() <= 1)
              return arr;
          else
@@ -222,9 +222,9 @@ public class Assignment1 {
     }
 
     // merge the the results for mergeSort back together 
-    private ArrayList<String[]> merge(ArrayList<String[]> left, ArrayList<String[]> right, int index)
+    private ArrayList<Comparable[]> merge(ArrayList<Comparable[]> left, ArrayList<Comparable[]> right, int index)
     {
-         ArrayList<String[]> result = new ArrayList<String[]>();
+         ArrayList<Comparable[]> result = new ArrayList<Comparable[]>();
          while (left.size() > 0 && right.size() > 0)
          {
              if(left.get(0)[index].compareTo(right.get(0)[index]) <= 0)
@@ -266,9 +266,10 @@ public class Assignment1 {
             // String [] header = ;
              String [] row = null;// = initRelationReader.readNext();
              boolean justStarted = true;
+             ArrayList<Comparable[]> test = new ArrayList<Comparable[]>();
              //int indexToCompare = getIndexForColumn(header,attribute);
-             ArrayList<String[]> tenKRows = new ArrayList<String[]>();
-             ArrayList<String[]> sortedTenKRows = new ArrayList<String[]>();
+             ArrayList<Comparable[]> tenKRows = new ArrayList<Comparable[]>();
+             ArrayList<Comparable[]> sortedTenKRows = new ArrayList<Comparable[]>();
             
             //System.out.println("Reading 1000 lines from input filename "+relation+"...");
              int numFiles = 0;
@@ -276,7 +277,7 @@ public class Assignment1 {
              {
                  justStarted = false;
                  //System.out.println("starting set "+numFiles+1);
-                 // get 10k rows
+                 // get rows
                  for(int i=0; i<MaxLinesToRead; i++)
                  {
                      String[] line = initRelationReader.readNext();
@@ -333,11 +334,11 @@ public class Assignment1 {
 
     }
     
-    private String flattenArray(String[] str, String joinstr) {
+    private String flattenArray(Object[] array, String joinstr) {
         String outstr = "";
-        for (int i=0; i<str.length; i++){
-            if (str[i].equals("") != true) {
-                outstr = outstr + str[i];
+        for (int i=0; i<array.length; i++){
+            if (array[i].equals("") != true) {
+                outstr = outstr + array[i].toString();
                 outstr = outstr + joinstr;
             }
         }
