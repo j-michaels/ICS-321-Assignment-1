@@ -8,6 +8,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Iterator;
 
 // simple struct for the indices
@@ -43,71 +44,64 @@ public class Assignment1 {
     int MaxLinesToRead = 6000;
     int TotalIndices = 500;
     int indexInterval;
+    int totalColumns;
+    HashSet<Integer> columns;
     String filen;
 	
 	//load takes a fileName as an argument and
 	//reads in the CSV file at the given path.
 	//The data may not all fit in memory
-	public void load(String fileName)
+	public void load(String fileName, HashSet<Integer> cols)
 	{
 		try {
 			CSVReader reader =  new CSVReader(new FileReader(fileName),'|');
-		   filen = fileName;
-		   indexInterval = MaxLinesToRead / TotalIndices;
+		    filen = fileName;
+		    columns = cols;
+		    indexInterval = MaxLinesToRead / TotalIndices;
 			System.out.println("load "+fileName);
-            String [] tmpline;
-            int totalColumns;
-            tmpline = reader.readNext();
-            totalColumns = tmpline.length;
-            indices = (ArrayList<IndexNode>[])new ArrayList[tmpline.length];
-            for (int i=0; i<tmpline.length; i++) {
-                indices[i] = new ArrayList<IndexNode>();
+            totalColumns = java.util.Collections.max(columns)+1;
+            
+            indices = (ArrayList<IndexNode>[])new ArrayList[totalColumns];
+            Iterator<Integer> itr = columns.iterator();
+            int column;
+            //System.out.println("Initializing indices.");
+            
+            while (itr.hasNext()) {
+                column = itr.next();
+                //System.out.println("Col: '"+column+"'");
+                indices[column] = new ArrayList<IndexNode>();
             }
             
-//            for (int i=0; i < tmpline.length; i++) {
-            externalSort(fileName, totalColumns);
-//            }
-
+            externalSort(fileName);
+            
+            itr = columns.iterator();
             // sort the generated indices
-            for (int i = 0; i < totalColumns; i++) {
-                java.util.Collections.sort(indices[i]);
+            while (itr.hasNext()) {
+                column = itr.next();
+                java.util.Collections.sort(indices[column]);
             }
             
-            
-//	    	String [] nextLine;
-//			while ((nextLine = reader.readNext()) != null) {
-			    // TODO Load CSV
-				 // nextLine[] is an array of values from the line
-			    // ex: System.out.println(nextLine[0] + nextLine[1] + "etc...");
-			    
-			    //externalSort(String relation, String attribute, int indexToCompare)
-
-			    /*
-			        Plan:
-			            Load up to memory limit
-			            Quicksort that, dump to file data.1
-			            Repeat until all data is sorted in data.n files
-			            Merge sort data.n files
-			                n-way comparison, immediately read to output file all_data
-			                
-			            
-			            load index for each column into memory
-			    */
-//             for( int i=0; i<nextLine.length-1; i++) {
-//			      System.out.print(nextLine[i] + "|");
-//             }
-//			    System.out.println();
-//			}
-	
-            // now reload each one and 
-		
+			/*
+    	        Plan:
+    	            Load up to memory limit
+    	            Quicksort that, dump to file data.1
+    	            Repeat until all data is sorted in data.n files
+    	            Merge sort data.n files
+    	                n-way comparison, immediately read to output file all_data
+	                
+	            
+    	            load index for each column into memory
+    	    */		
 	    } catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 	    } catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} catch (NumberFormatException e) {
+            System.out.println("Malformed commands input.");
+            e.printStackTrace();
+        }
 	}
 	
 	
@@ -153,6 +147,7 @@ public class Assignment1 {
     		String [] nextLine;
     		// Find in the index
     		int j = findInIndex(columnNumber, value);
+    		if (j < 11) { j = 0; } else { j = j-10; }
     		String filenc = "file_sorted_col_" + columnNumber+".csv";
     		//System.out.println("Opening file "+filenc+" at position "+j+", looking for column "+columnNumber);
     		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
@@ -186,6 +181,7 @@ public class Assignment1 {
     		String [] nextLine;
     		// Find in the index
     		int j = findInIndex(columnNumber, String.valueOf(value));
+    		if (j < 11) { j = 0; } else { j = j-10; }
     		String filenc = "file_sorted_col_" + columnNumber+".csv";
     		//System.out.println("Opening file "+filenc+" at position "+j+", looking for column "+columnNumber);
     		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
@@ -260,7 +256,7 @@ public class Assignment1 {
 	    
 	//}
 	
-	private void externalSort(String relation, int columns)
+	private void externalSort(String relation)
     {
          try
          {
@@ -296,7 +292,10 @@ public class Assignment1 {
                  }
                  // sort the rows according to the index
                  //System.out.println("Sorting the input and dumping to a new file.");
-                for (int i=1; i<4 ;i++) {
+                //for (int i=1; i<4 ;i++) {
+                Iterator<Integer> itr = columns.iterator();
+                while (itr.hasNext()) {
+                    int i = itr.next();
                     //if ((i == 2) || (i == 1) || (i == 3)) {
                     sortedTenKRows = mergeSort(tenKRows, i);
                      // write to disk
@@ -315,9 +314,10 @@ public class Assignment1 {
                  tenKRows.clear();
              }
              //System.out.println("Merging files, total columns: "+columns);
-             for (int i=1; i<4; i++) {
-                 //System.out.println("for column "+i);
-                 mergeFiles("file", numFiles, i);
+             Iterator<Integer> itr = columns.iterator();
+            while (itr.hasNext()) {
+                int i = itr.next();
+                mergeFiles("file", numFiles, i);
             }
 
              initRelationReader.close();
@@ -341,7 +341,6 @@ public class Assignment1 {
                 outstr = outstr + joinstr;
             }
         }
-        //System.out.println(outstr);
         return outstr;
     }
 
@@ -436,15 +435,12 @@ public class Assignment1 {
 
                      // Indices store up to indexInterval total rows                     
                     if (indexLine % indexInterval == 0) {
-                        //indices[compareIndex].add(filerows.get(minIndex)[compareIndex] + "|" + compareIndex);
                         IndexNode n = new IndexNode(filerows.get(minIndex)[compareIndex], compareIndex);
+                        //System.out.println("Index: " + compareIndex);
+                        //System.out.println("Total: " + totalColumns);
                         indices[compareIndex].add(n);
                     }
-                     
-
-                     //if ((indexLine % 20) == 0) {
-                         //indices[compareIndex].add(filerows.get(minIndex)[compareIndex] + "|" + compareIndex);
-                    //}
+                    
                     indexLine++;
                      
                      // get another row from the file that had the min
