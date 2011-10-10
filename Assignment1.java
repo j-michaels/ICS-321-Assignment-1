@@ -17,10 +17,31 @@ class KeyValue implements Comparable {
     Comparable key;
     String value;
     
+    public KeyValue(Comparable akey, String avalue) {
+        key = akey;
+        value = avalue;
+    }
+    
     public Comparable getValue() { return this.key; }
     public String toString() { return value; }
 
-    public int compareTo(Comparable otherThing) { return this.key.compareTo(otherThing.getValue()); }
+    
+
+    public int compareTo(Object otherThing) {
+        if (otherThing instanceof KeyValue) {
+            return key.compareTo(((KeyValue)otherThing).getValue());
+        } else {
+            return key.compareTo(otherThing);
+        }
+    }
+    
+    public boolean equals(Object otherObj) {
+        if (otherObj instanceof KeyValue) {
+            return key.equals((KeyValue)otherObj.getValue());
+        } else {
+            return key.equals(otherObj);
+        }
+    }
      
     
 }
@@ -372,7 +393,7 @@ public class Assignment1 {
                  // get rows
                  for(int i=0; i<MaxLinesToRead; i++)
                  {
-                     Comparable[] line = initRelationReader.readNext();
+                     String[] line = initRelationReader.readNext();
                      if (line==null)
                      {
                          row = null; // make sure it breaks out of the while loop
@@ -386,9 +407,6 @@ public class Assignment1 {
                         
                          row = line; // just to make sure it doesn't break out of the while loop
                          Comparable[] rowAdded = new Comparable[line.length];
-  //                       Iterator<Integer> itr = columns.iterator();
- //                        while (itr.hasNext()) {
-//                             int x = itr.next();
                          for (int x=0; x<line.length; x++) {
                              int columnType=-1;
                              try {
@@ -397,7 +415,6 @@ public class Assignment1 {
                                  
                                  rowAdded[x] = kv;
                                  columnType = 0;
-                                 //if (columnType == -1) columnType = 0;
                              } catch (NumberFormatException e) {
                                  
                              }
@@ -412,22 +429,13 @@ public class Assignment1 {
                                      KeyValue kv = new KeyValue(f, line[x]);
                                         rowAdded[x] = kv;
                                         columnType = -1;
-                                        //if (columnType == -1) columnType = 1;
-                                    
-                                    /*} else {
-                                    
-                                        System.out.println("Something wrong here. line[x]="+line[x]+"; f formatted="+String.format("%.2f", f));
-                                    
-                                    }*/
-                                     //} else { System.out.println("ZAPO"+f);}
-                                 } catch (NumberFormatException e) {
-                                     //row[x] = line[x];
-                                     //e.printStackTrace(); do nothing
-                                 }
+
+                                 } catch (NumberFormatException e) { }
                              }
-                             //if (rowAdded[x] == null) {rowAdded[x] = line[x];
-                             if (columnType == -1) columnType=2;
-                                 //} //System.out.println("OOGGGA: '"+line[x] + "'");}
+                            if (rowAdded[x] == null) {
+                                rowAdded[x] = line[x];
+                             if (columnType == -1) columnType=2; }
+                             //System.out.println("OOGGGA: '"+line[x] + "'");}
                              columnTypes[x] = columnType;
                          }
                          //System.out.println("Adding row: "+flattenArray(rowAdded, "|"));
@@ -514,14 +522,15 @@ public class Assignment1 {
         Comparable output = null;
         try {
             Integer in = Integer.parseInt(input);
-            output = in;
+            
+            output = new KeyValue(in, input);
         } catch (NumberFormatException e) {
             
         }
         if (output == null) {
             try {
                 Float f = Float.parseFloat(input);
-                output = f;
+                output = new KeyValue(f, input);
             } catch (NumberFormatException e) {
             }
         }
@@ -536,7 +545,7 @@ public class Assignment1 {
                 output[i] = input[i];
             }
         }
-        try {
+        /*try {
             Integer in = Integer.parseInt(input[index]);
             output[index] = in;
         } catch (NumberFormatException e) {
@@ -550,7 +559,8 @@ public class Assignment1 {
             }
         }
         if (output[index] == null) {output[index] = input[index];}
-        
+        */
+        output[index] = convertIntOrFloat(input[index]);
         return output;
     }
 
