@@ -10,6 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Comparator;
+
+class IndexNodeComparator implements Comparator {
+    public int compare(Object in1, Object in2) {
+        if ((in1 instanceof IndexNode) && (in2 instanceof IndexNode)) {
+            return ((IndexNode)in1).getValue().compareTo(((IndexNode)in2).getValue());
+        } else { return 0; }
+    }
+    /*
+    public boolean equals(IndexNode in1, IndexNode in2) {
+        return in1.getValue().equals(in2.getValue());
+    }*/
+}
 
 // because Java is so completely stupid about converting Floats to strings and back again,
 // they have to be wrapped in this class.
@@ -24,8 +37,6 @@ class KeyValue implements Comparable {
     
     public Comparable getValue() { return this.key; }
     public String toString() { return value; }
-
-    
 
     public int compareTo(Object otherThing) {
         if (otherThing instanceof KeyValue) {
@@ -51,8 +62,40 @@ class IndexNode implements Comparable<IndexNode> {
     int location;
     
     public IndexNode(Comparable val, int loc) {
-        value = val;
+        if (val instanceof KeyValue) {
+            value = (KeyValue)val;
+        } else if (val instanceof Float) {
+            value = val;
+        } else if (val instanceof Integer) {
+            value = val;
+        } else if (val instanceof String) {
+            value = convertIntOrFloat((String)val);
+            //value = val;
+        } else {
+            //System.out.println("WTF WHY IS ITTT");
+            System.exit(1);
+        }
         location = loc;
+    }
+    
+    private Comparable convertIntOrFloat(String input) {
+        Comparable output = null;
+        try {
+            Integer in = Integer.parseInt(input);
+            
+            output = new KeyValue(in, input);
+        } catch (NumberFormatException e) {
+            
+        }
+        if (output == null) {
+            try {
+                Float f = Float.parseFloat(input);
+                output = new KeyValue(f, input);
+            } catch (NumberFormatException e) {
+            }
+        }
+        if (output == null) {output = input;}
+        return output;
     }
     
     public int compareTo(IndexNode otherNode) {
@@ -140,7 +183,7 @@ public class Assignment1 {
                 //System.out.println(flattenArray(indices[column], ", "));
                 
                 
-                java.util.Collections.sort(indices[column]);
+                java.util.Collections.sort(indices[column], new IndexNodeComparator());
             }
             
 			/*
@@ -154,17 +197,18 @@ public class Assignment1 {
 	            
     	            load index for each column into memory
     	    */
-    	    //System.out.println("INDICES!!!!!!");
-    	    /*Iterator<Integer> itr1 = columns.iterator();
+    	    System.out.println("INDICES!!!!!!");
+    	    Iterator<Integer> itr1 = columns.iterator();
     	    while (itr1.hasNext()) {
     	        Integer column1=itr1.next();
     	        Iterator<IndexNode> itr2 = indices[column1].iterator();
     	        while(itr2.hasNext()) {
     	            IndexNode in = itr2.next();
     	            
-    	            System.out.println(in.getValue());
+    	            System.out.print(in.getValue()+": "+in.getLocation() + ", ");
     	        }
-    	    }*/
+    	        System.out.println("; Fin");
+    	    }
 	    } catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -207,7 +251,12 @@ public class Assignment1 {
 	    return gtrthanindex;*/
 	    IndexNode compareNode = new IndexNode(value, 0);
 	    //System.out.println("Searching column "+columnNumber+"for "+value.toString());
-	    return java.util.Collections.binarySearch(indices[columnNumber], compareNode);
+	    int ix = java.util.Collections.binarySearch(indices[columnNumber], compareNode, new IndexNodeComparator());
+	    IndexNode in = null;
+	    if (ix >= 0) {
+	        in = indices[columnNumber].get(ix);
+	    }
+	    return ix;
 	}
 	
 	//searchEq takes a columnNumber and a value and prints
@@ -227,15 +276,28 @@ public class Assignment1 {
 	        columnNumber--;
     		String [] nextLine;
     		// Find in the index
-    		int j = findInIndex(columnNumber, b)-indexInterval;
+            
+    		int ix = findInIndex(columnNumber, b)-indexInterval;
+    		int j = 0;
+    		if (ix >= 0) {
+    	        j= indices[columnNumber].get(ix).getLocation();
+    	    } else {
+    	        System.out.println("Couldn't find: '"+value+"'");
+    	        return;
+    	    }
+    		if (value.equals("F")) {
+    		    System.out.println("F: "+(j+indexInterval));
+    		}
     		if (j < 0) { j = 0; }
+    		
     		
     		String filenc = "file_sorted_col_" + columnNumber+".csv";
     		//System.out.println("Opening file "+filenc+" at position "+j+", looking for column "+columnNumber);
     		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
     		while ((nextLine = reader.readNext()) != null) {
     		    //System.out.print("Seq "+columnNumber+"; col0: "+ nextLine[0]+ "; sc: '"+nextLine[columnNumber]+"' vs '"+value+"': ");
-    		    if (b.equals(nextLine[columnNumber])) {
+    		    if (nextLine[3].equals("99798.76")) { System.out.println("VALUE:"+value);}
+    		    if (value.equals(nextLine[columnNumber])) {
 //    		    if (nextLine[columnNumber].equals(b)) {
     		        //System.out.println("Yes.");
     		        System.out.println(flattenArray(nextLine, "|"));
@@ -246,6 +308,7 @@ public class Assignment1 {
     		    } else {
     		        //System.out.println(" No.");
     		        //break;
+    		        //if (nextLine[columnNumber].equals("F") && b.equals("F")) { System.out.println("FOOOO"); }
     		    }
     		}
 	    } catch (FileNotFoundException e) {
@@ -659,10 +722,12 @@ public class Assignment1 {
                      // Indices store up to indexInterval total rows                     
                     if (indexLine % indexInterval == 0) {
                                                 
-                        IndexNode n = new IndexNode(filerows.get(minIndex)[compareIndex], compareIndex);
+                        IndexNode n = new IndexNode(filerows.get(minIndex)[compareIndex], indexLine);
                         //System.out.println("Indexline: " + indexLine);
                         //System.out.println("Total: " + totalColumns);
-                        indices[compareIndex].add(n);
+                        if (findInIndex(compareIndex, filerows.get(minIndex)[compareIndex]) < 0) {
+                            indices[compareIndex].add(n);
+                        } else { System.out.println("Already exitsts.");}
                     }
                     
                     indexLine++;
