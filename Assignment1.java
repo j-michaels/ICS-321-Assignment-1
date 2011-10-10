@@ -37,7 +37,7 @@ class KeyValue implements Comparable {
     
     public boolean equals(Object otherObj) {
         if (otherObj instanceof KeyValue) {
-            return key.equals((KeyValue)otherObj.getValue());
+            return key.equals(((KeyValue)otherObj).getValue());
         } else {
             return key.equals(otherObj);
         }
@@ -235,7 +235,8 @@ public class Assignment1 {
     		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
     		while ((nextLine = reader.readNext()) != null) {
     		    //System.out.print("Seq "+columnNumber+"; col0: "+ nextLine[0]+ "; sc: '"+nextLine[columnNumber]+"' vs '"+value+"': ");
-    		    if (nextLine[columnNumber].equals(b)) {
+    		    if (b.equals(nextLine[columnNumber])) {
+//    		    if (nextLine[columnNumber].equals(b)) {
     		        //System.out.println("Yes.");
     		        System.out.println(flattenArray(nextLine, "|"));
     		        
@@ -244,7 +245,7 @@ public class Assignment1 {
                     //}
     		    } else {
     		        //System.out.println(" No.");
-    		        break;
+    		        //break;
     		    }
     		}
 	    } catch (FileNotFoundException e) {
