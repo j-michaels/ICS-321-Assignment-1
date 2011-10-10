@@ -11,6 +11,19 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.Iterator;
 
+// because Java is so completely stupid about converting Floats to strings and back again,
+// they have to be wrapped in this class.
+class KeyValue implements Comparable {
+    Comparable key;
+    String value;
+    
+    public Comparable getValue() { return this.key; }
+    public String toString() { return value; }
+
+    public int compareTo(Comparable otherThing) { return this.key.compareTo(otherThing.getValue()); }
+     
+    
+}
 // simple struct for the indices
 class IndexNode implements Comparable<IndexNode> {
     Comparable value;
@@ -380,24 +393,41 @@ public class Assignment1 {
                              int columnType=-1;
                              try {
                                  Integer in = Integer.parseInt((String)line[x]);
-                                 rowAdded[x] = in;
+                                 KeyValue kv = new KeyValue(in, line[x]);
+                                 
+                                 rowAdded[x] = kv;
                                  columnType = 0;
+                                 //if (columnType == -1) columnType = 0;
                              } catch (NumberFormatException e) {
                                  
                              }
+                             
                              if (rowAdded[x] == null) {
-                             try {
-                                 Float f = Float.parseFloat((String)line[x]);
-                                 //if (f.toString().equals((String)line[x])) {
-                                 //    System.out.println("FOOO!!");
-                                 rowAdded[x] = f;
-                                 columnType = 1;
-                                 //} else { System.out.println("ZAPO"+f);}
-                             } catch (NumberFormatException e) {
-                                 //row[x] = line[x];
-                                 //e.printStackTrace(); do nothing
-                             }}
-                             if (rowAdded[x] == null) {rowAdded[x] = line[x]; columnType=2;} //System.out.println("OOGGGA: '"+line[x] + "'");}
+                            //if (columnType == -1) {
+                                try {
+                                     Float f = Float.parseFloat((String)line[x]);
+                                     columnType = 1;
+                                     /*if (String.format("%.2f", f).equals((String)line[x])) {
+                                     //    System.out.println("FOOO!!");*/
+                                     KeyValue kv = new KeyValue(f, line[x]);
+                                        rowAdded[x] = kv;
+                                        columnType = -1;
+                                        //if (columnType == -1) columnType = 1;
+                                    
+                                    /*} else {
+                                    
+                                        System.out.println("Something wrong here. line[x]="+line[x]+"; f formatted="+String.format("%.2f", f));
+                                    
+                                    }*/
+                                     //} else { System.out.println("ZAPO"+f);}
+                                 } catch (NumberFormatException e) {
+                                     //row[x] = line[x];
+                                     //e.printStackTrace(); do nothing
+                                 }
+                             }
+                             //if (rowAdded[x] == null) {rowAdded[x] = line[x];
+                             if (columnType == -1) columnType=2;
+                                 //} //System.out.println("OOGGGA: '"+line[x] + "'");}
                              columnTypes[x] = columnType;
                          }
                          //System.out.println("Adding row: "+flattenArray(rowAdded, "|"));
@@ -465,7 +495,9 @@ public class Assignment1 {
             else */
             if (array[i].equals("") != true) {
                 if (array[i] instanceof Float) {
-                    System.out.println("Original: "+array[i] +"; new: "+String.format("%.2f", array[i]));
+                    String s = String.format("%.3f", array[i]);
+                    
+                    System.out.println("Original: "+array[i] +"; new: "+s.substring(0, s.length()-1));
                     outstr = outstr + String.format("%.2f",array[i]);
                 } else {
                     outstr = outstr + array[i].toString();
