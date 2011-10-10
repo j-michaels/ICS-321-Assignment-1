@@ -13,10 +13,10 @@ import java.util.Iterator;
 
 // simple struct for the indices
 class IndexNode implements Comparable<IndexNode> {
-    String value;
+    Comparable value;
     int location;
     
-    public IndexNode(String val, int loc) {
+    public IndexNode(Comparable val, int loc) {
         value = val;
         location = loc;
     }
@@ -24,6 +24,12 @@ class IndexNode implements Comparable<IndexNode> {
     public int compareTo(IndexNode otherNode) {
         //if ((otherNode == null) || (value == null)) { return 0; }
         //else {
+            Comparable otherValue = otherNode.getValue();
+            
+            //if ((value instanceof Integer) || (otherValue instanceof String)) {
+                //System.out.println(this);
+            //}
+            
             return value.compareTo(otherNode.getValue());
         //}
     }
@@ -34,7 +40,11 @@ class IndexNode implements Comparable<IndexNode> {
             return value.equals(otherNode.getValue());
         }
     }
-    public String getValue() { return value; }
+    
+    public String toString() {
+        return ((Object)value).toString();
+    }
+    public Comparable getValue() { return value; }
     public int getLocation() { return location; }
     
 }
@@ -45,6 +55,8 @@ public class Assignment1 {
     int TotalIndices = 500;
     int indexInterval;
     int totalColumns;
+    int cardinality;
+    int[] columnTypes;
     HashSet<Integer> columns;
     String filen;
 	
@@ -57,15 +69,15 @@ public class Assignment1 {
 			CSVReader reader =  new CSVReader(new FileReader(fileName),'|');
 		    filen = fileName;
 		    columns = cols;
+		    cardinality = -1;
 		    indexInterval = MaxLinesToRead / TotalIndices;
 			System.out.println("load "+fileName);
             totalColumns = java.util.Collections.max(columns)+1;
-            
             indices = (ArrayList<IndexNode>[])new ArrayList[totalColumns];
             Iterator<Integer> itr = columns.iterator();
-            int column;
-            //System.out.println("Initializing indices.");
             
+            //System.out.println("Initializing indices.");
+            Integer column;
             while (itr.hasNext()) {
                 column = itr.next();
                 //System.out.println("Col: '"+column+"'");
@@ -73,11 +85,27 @@ public class Assignment1 {
             }
             
             externalSort(fileName);
-            
+
             itr = columns.iterator();
             // sort the generated indices
             while (itr.hasNext()) {
                 column = itr.next();
+                //System.out.println("Sorting indices column "+column);
+                /*Iterator<IndexNode> itr2=indices[column].iterator();
+                while (itr2.hasNext()) {
+                    String kind ="";
+                    Comparable b = itr2.next().getValue();
+                    if (b instanceof Float) {
+                        kind="float";
+                    } else if (b instanceof Integer) {
+                        kind = "Int";
+                    } else { kind = "String";}
+                    //System.out.print(kind+": " + b + ", ");
+                }
+                System.out.println(";");*/
+                //System.out.println(flattenArray(indices[column], ", "));
+                
+                
                 java.util.Collections.sort(indices[column]);
             }
             
@@ -91,7 +119,18 @@ public class Assignment1 {
 	                
 	            
     	            load index for each column into memory
-    	    */		
+    	    */
+    	    //System.out.println("INDICES!!!!!!");
+    	    /*Iterator<Integer> itr1 = columns.iterator();
+    	    while (itr1.hasNext()) {
+    	        Integer column1=itr1.next();
+    	        Iterator<IndexNode> itr2 = indices[column1].iterator();
+    	        while(itr2.hasNext()) {
+    	            IndexNode in = itr2.next();
+    	            
+    	            System.out.println(in.getValue());
+    	        }
+    	    }*/
 	    } catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -107,7 +146,7 @@ public class Assignment1 {
 	
 	// findInIndex takes the column number and value and
 	// finds the closest location in the datafile
-	public int findInIndex(int columnNumber, String value)
+	public int findInIndex(int columnNumber, Comparable value)
 	{
 	    // currently linear search O(n) time
 	    // find the most great index that is less than over the index of the value
@@ -133,6 +172,7 @@ public class Assignment1 {
 	    }
 	    return gtrthanindex;*/
 	    IndexNode compareNode = new IndexNode(value, 0);
+	    //System.out.println("Searching column "+columnNumber+"for "+value.toString());
 	    return java.util.Collections.binarySearch(indices[columnNumber], compareNode);
 	}
 	
@@ -141,22 +181,36 @@ public class Assignment1 {
 	//More points will be given for faster return of this method
 	public void searchEq(int columnNumber, String value)
 	{
+	    //System.out.println("Converting '"+value+"' to int or float");
+	    Comparable b = convertIntOrFloat(value);
+	    //System.out.print("Converted.");
+	    //if (b instanceof Float) { System.out.println(" Now a Float."); }
+	    //else if (b instanceof String) { System.out.println(" Still a String."); }
+	    //else if (b instanceof Integer){ System.out.println(" Now an Integer."); } 
+	    
 	    try {
 	        System.out.println("searchEq col #"+columnNumber+"="+value);
 	        columnNumber--;
     		String [] nextLine;
     		// Find in the index
-    		int j = findInIndex(columnNumber, value);
-    		if (j < 11) { j = 0; } else { j = j-10; }
+    		int j = findInIndex(columnNumber, b)-indexInterval;
+    		if (j < 0) { j = 0; }
+    		
     		String filenc = "file_sorted_col_" + columnNumber+".csv";
     		//System.out.println("Opening file "+filenc+" at position "+j+", looking for column "+columnNumber);
     		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
     		while ((nextLine = reader.readNext()) != null) {
-    		    if (nextLine[columnNumber].equals(value)) {
+    		    //System.out.print("Seq "+columnNumber+"; col0: "+ nextLine[0]+ "; sc: '"+nextLine[columnNumber]+"' vs '"+value+"': ");
+    		    if (nextLine[columnNumber].equals(b)) {
+    		        //System.out.println("Yes.");
     		        System.out.println(flattenArray(nextLine, "|"));
+    		        
     		        //for( int i=0; i<nextLine.length-1; i++) {
        			    //  System.out.print(nextLine[i] + "|");
                     //}
+    		    } else {
+    		        //System.out.println(" No.");
+    		        break;
     		    }
     		}
 	    } catch (FileNotFoundException e) {
@@ -177,16 +231,35 @@ public class Assignment1 {
 		System.out.println("searchGtr col #"+columnNumber+">"+value);
 		try {
 	        columnNumber--;
+	        Comparable compareValue = null;
+	        if (columnTypes[columnNumber] == 0) {
+	            compareValue = new Integer((int)value);
+	        } else if (columnTypes[columnNumber] == 2) {
+	            compareValue = String.valueOf(value);
+	        } else {
+	            compareValue = new Float(value);
+	        }
     		//System.out.println("searchEq col #"+columnNumber+"="+value);
     		String [] nextLine;
     		// Find in the index
-    		int j = findInIndex(columnNumber, String.valueOf(value));
-    		if (j < 11) { j = 0; } else { j = j-10; }
+    		int j = findInIndex(columnNumber, compareValue)-indexInterval;
+    		if (j < 0) { j = 0; };
     		String filenc = "file_sorted_col_" + columnNumber+".csv";
     		//System.out.println("Opening file "+filenc+" at position "+j+", looking for column "+columnNumber);
     		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
     		while ((nextLine = reader.readNext()) != null) {
-    		    if (Float.parseFloat(nextLine[columnNumber]) > value) {
+    		    
+    		    // because java is retarded when converting between types
+    		    Comparable compareLine = null;
+    	        if (columnTypes[columnNumber] == 0) {
+    	            compareLine = Integer.parseInt(nextLine[columnNumber]);
+    	        } else if (columnTypes[columnNumber] == 2) {
+    	            compareLine = nextLine[columnNumber];
+    	        } else {
+    	            compareLine = Float.parseFloat(nextLine[columnNumber]);
+    	        }
+    		    if (compareLine.compareTo(compareValue) > 0) {
+    		        //System.out.println("OOOGAAAA");
     		        System.out.println(flattenArray(nextLine, "|"));
     		        //for( int i=0; i<nextLine.length-1; i++) {
        			    //  System.out.print(nextLine[i] + "|");
@@ -227,6 +300,13 @@ public class Assignment1 {
          ArrayList<Comparable[]> result = new ArrayList<Comparable[]>();
          while (left.size() > 0 && right.size() > 0)
          {
+             //if (left.get(0)[index] == null) {System.out.println("OOOH "+index+": "+left.get(0).length);}
+             //System.out.println("Left: '"+ left.get(0)[index] + "'; Right: '" + right.get(0)[index]+"'");
+             //Left: '160882.76'; Right: '31084.79'
+             Object newleft;
+             Object newright;
+             
+             
              if(left.get(0)[index].compareTo(right.get(0)[index]) <= 0)
              {
                  result.add(left.get(0));
@@ -264,9 +344,8 @@ public class Assignment1 {
              //BufferedReader initRelationReader = new BufferedReader(intialRelationInput);
  			CSVReader initRelationReader =  new CSVReader(initialRelationInput,'|');
             // String [] header = ;
-             String [] row = null;// = initRelationReader.readNext();
+             Comparable [] row = null;// = initRelationReader.readNext();
              boolean justStarted = true;
-             ArrayList<Comparable[]> test = new ArrayList<Comparable[]>();
              //int indexToCompare = getIndexForColumn(header,attribute);
              ArrayList<Comparable[]> tenKRows = new ArrayList<Comparable[]>();
              ArrayList<Comparable[]> sortedTenKRows = new ArrayList<Comparable[]>();
@@ -280,16 +359,56 @@ public class Assignment1 {
                  // get rows
                  for(int i=0; i<MaxLinesToRead; i++)
                  {
-                     String[] line = initRelationReader.readNext();
+                     Comparable[] line = initRelationReader.readNext();
                      if (line==null)
                      {
-                         row = null;
+                         row = null; // make sure it breaks out of the while loop
                          break;
+                     } else { // convert floats and integers to their classes
+                         if ((cardinality == -1) && (line.length > 0)) {
+                             cardinality = line.length;
+                             //System.out.println("Initializing columnTypes at length "+cardinality);
+                             columnTypes = new int[line.length];
+                         }
+                        
+                         row = line; // just to make sure it doesn't break out of the while loop
+                         Comparable[] rowAdded = new Comparable[line.length];
+  //                       Iterator<Integer> itr = columns.iterator();
+ //                        while (itr.hasNext()) {
+//                             int x = itr.next();
+                         for (int x=0; x<line.length; x++) {
+                             int columnType=-1;
+                             try {
+                                 Integer in = Integer.parseInt((String)line[x]);
+                                 rowAdded[x] = in;
+                                 columnType = 0;
+                             } catch (NumberFormatException e) {
+                                 
+                             }
+                             if (rowAdded[x] == null) {
+                             try {
+                                 Float f = Float.parseFloat((String)line[x]);
+                                 //if (f.toString().equals((String)line[x])) {
+                                 //    System.out.println("FOOO!!");
+                                 rowAdded[x] = f;
+                                 columnType = 1;
+                                 //} else { System.out.println("ZAPO"+f);}
+                             } catch (NumberFormatException e) {
+                                 //row[x] = line[x];
+                                 //e.printStackTrace(); do nothing
+                             }}
+                             if (rowAdded[x] == null) {rowAdded[x] = line[x]; columnType=2;} //System.out.println("OOGGGA: '"+line[x] + "'");}
+                             columnTypes[x] = columnType;
+                         }
+                         //System.out.println("Adding row: "+flattenArray(rowAdded, "|"));
+                         tenKRows.add(rowAdded);
+                         
                      }
+                     
                      //row = line.split("|");
-                     row = line;
+                     //row = line;
                      //tenKRows.add(getIntsFromStringArray(row));
-                     tenKRows.add(row);
+                     //tenKRows.add(row);
                  }
                  // sort the rows according to the index
                  //System.out.println("Sorting the input and dumping to a new file.");
@@ -336,13 +455,71 @@ public class Assignment1 {
     
     private String flattenArray(Object[] array, String joinstr) {
         String outstr = "";
+        //boolean null_happened = false;
         for (int i=0; i<array.length; i++){
+            /*if (array[i] == null) {
+                null_happened = true;
+                outstr = outstr + "NULL" + joinstr;
+                System.out.println("NULL!");
+            }
+            else */
             if (array[i].equals("") != true) {
-                outstr = outstr + array[i].toString();
+                if (array[i] instanceof Float) {
+                    System.out.println("Original: "+array[i] +"; new: "+String.format("%.2f", array[i]));
+                    outstr = outstr + String.format("%.2f",array[i]);
+                } else {
+                    outstr = outstr + array[i].toString();
+                }
                 outstr = outstr + joinstr;
             }
         }
+        //if (null_happened) {
+        //System.out.println(outstr); }
         return outstr;
+    }
+    
+    private Comparable convertIntOrFloat(String input) {
+        Comparable output = null;
+        try {
+            Integer in = Integer.parseInt(input);
+            output = in;
+        } catch (NumberFormatException e) {
+            
+        }
+        if (output == null) {
+            try {
+                Float f = Float.parseFloat(input);
+                output = f;
+            } catch (NumberFormatException e) {
+            }
+        }
+        if (output == null) {output = input;}
+        return output;
+    }
+
+    private Comparable[] convertIntsAndFloats(String[] input, int index) {
+        Comparable[] output = new Comparable[input.length];
+        for (int i=0; i<input.length;i++) {
+            if (i != index) {
+                output[i] = input[i];
+            }
+        }
+        try {
+            Integer in = Integer.parseInt(input[index]);
+            output[index] = in;
+        } catch (NumberFormatException e) {
+            
+        }
+        if (output[index] == null) {
+            try {
+                Float f = Float.parseFloat(input[index]);
+                output[index] = f;
+            } catch (NumberFormatException e) {
+            }
+        }
+        if (output[index] == null) {output[index] = input[index];}
+        
+        return output;
     }
 
     private void mergeFiles(String relation, int numFiles, int compareIndex)
@@ -351,7 +528,7 @@ public class Assignment1 {
          {
              ArrayList<FileReader> mergefr = new ArrayList<FileReader>();
              ArrayList<CSVReader> mergefbr = new ArrayList<CSVReader>();
-             ArrayList<String[]> filerows = new ArrayList<String[]>(); 
+             ArrayList<Comparable[]> filerows = new ArrayList<Comparable[]>(); 
              FileWriter fw = new FileWriter(relation + "_sorted_col_" + compareIndex + ".csv");
              BufferedWriter bw = new BufferedWriter(fw);
              String [] header;
@@ -376,7 +553,9 @@ public class Assignment1 {
                  if (line != null)
                  {
                      //filerows.add(line.split("|"));
-                     filerows.add(line);
+                     //System.out.println("Before:"+flattenArray(line, "|"));
+                     //System.out.print("After:");
+                     filerows.add(convertIntsAndFloats(line, compareIndex));
                      someFileStillHasRows = true;
                  }
                  else 
@@ -386,11 +565,11 @@ public class Assignment1 {
 
              }
 
-             String[] row;
+             Comparable[] row;
              int cnt = 0;
              while (someFileStillHasRows)
              {
-                 String min;
+                 Comparable min;
                  int minIndex = 0;
 
                  row = filerows.get(0);
@@ -436,8 +615,9 @@ public class Assignment1 {
 
                      // Indices store up to indexInterval total rows                     
                     if (indexLine % indexInterval == 0) {
+                                                
                         IndexNode n = new IndexNode(filerows.get(minIndex)[compareIndex], compareIndex);
-                        //System.out.println("Index: " + compareIndex);
+                        //System.out.println("Indexline: " + indexLine);
                         //System.out.println("Total: " + totalColumns);
                         indices[compareIndex].add(n);
                     }
@@ -448,7 +628,7 @@ public class Assignment1 {
                      String[] line = mergefbr.get(minIndex).readNext();
                      if (line != null)
                      {
-                         filerows.set(minIndex,line);
+                         filerows.set(minIndex,convertIntsAndFloats(line, compareIndex));
                      }
                      else 
                      {

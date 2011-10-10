@@ -19,6 +19,7 @@ public class Driver {
 			Assignment1 a1 = new Assignment1();
 			BufferedReader reader = new BufferedReader(new FileReader(args[0]));
 			String line = null;
+			int cardinality = -1;
 			ArrayList<String[]> commands = new ArrayList<String[]>();
 			HashSet<Integer> columns = new HashSet<Integer>();
 			
