@@ -197,7 +197,7 @@ public class Assignment1 {
 	            
     	            load index for each column into memory
     	    */
-    	    System.out.println("INDICES!!!!!!");
+    	    /*System.out.println("INDICES!!!!!!");
     	    Iterator<Integer> itr1 = columns.iterator();
     	    while (itr1.hasNext()) {
     	        Integer column1=itr1.next();
@@ -208,7 +208,7 @@ public class Assignment1 {
     	            System.out.print(in.getValue()+": "+in.getLocation() + ", ");
     	        }
     	        System.out.println("; Fin");
-    	    }
+    	    }*/
 	    } catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -282,12 +282,12 @@ public class Assignment1 {
     		if (ix >= 0) {
     	        j= indices[columnNumber].get(ix).getLocation();
     	    } else {
-    	        System.out.println("Couldn't find: '"+value+"'");
-    	        return;
+    	        //System.out.println("Couldn't find: '"+value+"', ix: "+ix);
+    	        //return;
     	    }
-    		if (value.equals("F")) {
-    		    System.out.println("F: "+(j+indexInterval));
-    		}
+    		//if (value.equals("F")) {
+    		//    System.out.println("F: "+(j+indexInterval));
+    		//}
     		if (j < 0) { j = 0; }
     		
     		
@@ -296,7 +296,7 @@ public class Assignment1 {
     		CSVReader reader = new CSVReader(new FileReader(filenc), '|',  CSVParser.DEFAULT_QUOTE_CHARACTER, j);
     		while ((nextLine = reader.readNext()) != null) {
     		    //System.out.print("Seq "+columnNumber+"; col0: "+ nextLine[0]+ "; sc: '"+nextLine[columnNumber]+"' vs '"+value+"': ");
-    		    if (nextLine[3].equals("99798.76")) { System.out.println("VALUE:"+value);}
+    		    //if (nextLine[3].equals("99798.76")) { System.out.println("VALUE:"+value);}
     		    if (value.equals(nextLine[columnNumber])) {
 //    		    if (nextLine[columnNumber].equals(b)) {
     		        //System.out.println("Yes.");
@@ -307,7 +307,7 @@ public class Assignment1 {
                     //}
     		    } else {
     		        //System.out.println(" No.");
-    		        //break;
+    		        break;
     		        //if (nextLine[columnNumber].equals("F") && b.equals("F")) { System.out.println("FOOOO"); }
     		    }
     		}
@@ -569,7 +569,7 @@ public class Assignment1 {
                 if (array[i] instanceof Float) {
                     String s = String.format("%.3f", array[i]);
                     
-                    System.out.println("Original: "+array[i] +"; new: "+s.substring(0, s.length()-1));
+                    //System.out.println("Original: "+array[i] +"; new: "+s.substring(0, s.length()-1));
                     outstr = outstr + String.format("%.2f",array[i]);
                 } else {
                     outstr = outstr + array[i].toString();
@@ -726,8 +726,8 @@ public class Assignment1 {
                         //System.out.println("Indexline: " + indexLine);
                         //System.out.println("Total: " + totalColumns);
                         if (findInIndex(compareIndex, filerows.get(minIndex)[compareIndex]) < 0) {
-                            indices[compareIndex].add(n);
-                        } else { System.out.println("Already exitsts.");}
+                            indices[compareIndex].add(n);}
+                        //} else { System.out.println("Already exitsts.");}
                     }
                     
                     indexLine++;
